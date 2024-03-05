@@ -50,6 +50,14 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     private lateinit var cameraManager: CameraManager
     private lateinit var handler: Handler
     private lateinit var cameraDevice: CameraDevice
+    private var gyroScore: Int = 10
+    private var accScore: Int = 10
+    private var Bx: ArrayList<String> = ArrayList()
+    private var By: ArrayList<String> = ArrayList()
+    private var Bz: ArrayList<String> = ArrayList()
+    private var Ax: ArrayList<String> = ArrayList()
+    private var Ay: ArrayList<String> = ArrayList()
+    private var Az: ArrayList<String> = ArrayList()
     private val ip: String = "http://192.168.1.128:8000/"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -187,9 +195,15 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             .build()
         val retrofitAPI = retrofit.create(RetrofitAPI::class.java)
 
-        val dataModal: DataModal = DataModal(ax.toString(),
-                                             ay.toString(),
-                                             az.toString())
+        Ax.add(ax.toString())
+        Ay.add(ay.toString())
+        Az.add(az.toString())
+        accScore--
+        if(accScore != 0){
+            return
+        }
+        accScore = 10
+        val dataModal: DataModal = DataModal(Ax, Ay, Az)
         val call: Call<DataModal?>? = retrofitAPI.postData(dataModal)
         call!!.enqueue(object: Callback<DataModal?>{
             override fun onResponse(call: Call<DataModal?>, response: Response<DataModal?>) {
@@ -200,8 +214,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                 println("Error"+t.message)
             }
         })
-
-
+        Ax = ArrayList()
+        Ay = ArrayList()
+        Az = ArrayList()
 
     }
     private fun postGyro(bx:Float, by:Float, bz:Float){
@@ -211,9 +226,16 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             .build()
         val retrofitAPI = retrofit.create(RetrofitAPI::class.java)
 
-        val dataModal: GyroModal = GyroModal(bx.toString(),
-            by.toString(),
-            bz.toString())
+        Bx.add(bx.toString())
+        By.add(by.toString())
+        Bz.add(bz.toString())
+        gyroScore--
+        if(gyroScore != 0){
+            return
+        }
+        gyroScore = 10
+
+        val dataModal: GyroModal = GyroModal(Bx, By, Bz)
         val call: Call<GyroModal?>? = retrofitAPI.postGyro(dataModal)
         call!!.enqueue(object: Callback<GyroModal?>{
             override fun onResponse(call: Call<GyroModal?>, response: Response<GyroModal?>) {
@@ -224,6 +246,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                 println("Error"+t.message)
             }
         })
+        Bx = ArrayList()
+        By = ArrayList()
+        Bz = ArrayList()
     }
 
     public override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
@@ -239,6 +264,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             val str = "${x.toString()} ${y.toString()} ${z.toString()}"
             binding.text.text = str
             Thread {
+
                 postAcc(x, y, z)
                 runOnUiThread {
 
